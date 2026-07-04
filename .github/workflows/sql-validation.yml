@@ -1,0 +1,26 @@
+name: SQL Validation
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  validate-sql-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: List SQL files
+        run: find database -name "*.sql" -print
+
+      - name: Basic SQL file check
+        run: |
+          if find database -name "*.sql" | grep -q .; then
+            echo "SQL files found."
+          else
+            echo "No SQL files found."
+            exit 1
+          fi
