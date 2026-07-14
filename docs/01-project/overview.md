@@ -1,14 +1,14 @@
-# Project Overview
+# Visao geral do projeto
 
-The Hospital Management System DB is an academic database project focused on modeling and implementing a relational database for hospital operations.
+O Banco de Dados de Gestao Hospitalar e um projeto academico focado na modelagem e implementacao de um banco relacional para operacoes hospitalares.
 
-The system manages people, patients, healthcare professionals, residents, preceptors, appointments, procedures, hospital units and duty schedules.
+O sistema gerencia pessoas, pacientes, profissionais de saude, residentes, preceptores, atendimentos, procedimentos, unidades hospitalares e escalas de plantao.
 
-## Main Goals
+## Objetivos principais
 
-- Build a normalized relational model.
-- Implement SQL schema with constraints.
-- Insert representative test data.
-- Implement CRUD operations using pure SQL.
-- Create analytical queries.
-- Prepare the project for advanced database features in Phase 02.
+- Construir um modelo relacional normalizado.
+- Implementar o schema SQL com constraints.
+- Inserir dados de teste representativos.
+- Implementar operacoes CRUD usando SQL puro.
+- Criar consultas analiticas.
+- Preparar o projeto para recursos avancados de banco de dados na Etapa 2.

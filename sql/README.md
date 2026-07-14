@@ -1,6 +1,6 @@
-# SQL Scripts
+# Scripts SQL
 
-The official Phase 01 SQL scripts are maintained in the `database/` directory:
+Os scripts SQL oficiais da Etapa 1 ficam no diretorio `database/`:
 
 - `database/schema/01-create-tables.sql`
 - `database/seeds/02-seed-data.sql`
@@ -8,4 +8,4 @@ The official Phase 01 SQL scripts are maintained in the `database/` directory:
 - `database/queries/03-crud-queries.sql`
 - `database/queries/04-analytical-queries.sql`
 
-This directory is kept only as a pointer to the official structure, avoiding duplicated SQL files and version drift.
+Este diretorio foi mantido apenas como ponteiro para a estrutura oficial, evitando arquivos SQL duplicados e divergencia entre versoes.

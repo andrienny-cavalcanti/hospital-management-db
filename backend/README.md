@@ -1,19 +1,19 @@
-# Optional FastAPI Backend
+# Backend FastAPI opcional
 
-This backend provides an optional Swagger interface for Phase 01 operations.
+Este backend fornece uma interface Swagger opcional para as operacoes da Etapa 1.
 
-It does not replace the official SQL delivery. The database schema, seed data,
-CRUD examples and analytical queries remain in the `database/` directory.
+Ele nao substitui a entrega oficial em SQL. O schema do banco, os dados de teste,
+os exemplos de CRUD e as consultas analiticas continuam no diretorio `database/`.
 
-## Requirements
+## Requisitos
 
 - Python 3.11+
-- PostgreSQL running with the Phase 01 schema loaded
-- Dependencies from `backend/requirements.txt`
+- PostgreSQL em execucao com o schema da Etapa 1 carregado
+- Dependencias listadas em `backend/requirements.txt`
 
-## Setup
+## Configuracao
 
-From the repository root:
+A partir da raiz do repositorio:
 
 ```bash
 cd backend
@@ -23,16 +23,16 @@ pip install -r requirements.txt
 copy .env.example .env
 ```
 
-Edit `.env` or define `DATABASE_URL` in the terminal if your PostgreSQL user,
-password, host or database name is different.
+Edite o arquivo `.env` ou defina `DATABASE_URL` no terminal caso usuario, senha,
+host ou nome do banco sejam diferentes.
 
-Default connection:
+Conexao padrao:
 
 ```text
 postgresql://postgres:postgres@localhost:5432/hospital_management_db
 ```
 
-## Run
+## Executar
 
 ```bash
 uvicorn app.main:app --reload --env-file .env
@@ -44,21 +44,21 @@ Swagger UI:
 http://127.0.0.1:8000/docs
 ```
 
-OpenAPI JSON:
+JSON OpenAPI:
 
 ```text
 http://127.0.0.1:8000/openapi.json
 ```
 
-## Available groups
+## Grupos disponiveis
 
-- `Pacientes`: list, create, update and list appointments by patient.
-- `Atendimentos`: create appointments and manage performed procedures.
-- `Cadastros auxiliares`: create/list residents, preceptors, units, procedures and schedules.
-- `Consultas`: analytical queries required for Phase 01.
-- `Validacao`: minimum data validation for the academic statement.
+- `Pacientes`: listar, criar, atualizar e listar atendimentos por paciente.
+- `Atendimentos`: criar atendimentos e gerenciar procedimentos realizados.
+- `Cadastros auxiliares`: criar/listar residentes, preceptores, unidades, procedimentos e escalas.
+- `Consultas`: consultas analiticas exigidas na Etapa 1.
+- `Validacao`: validacao dos dados minimos exigidos no enunciado.
 
-## Academic scope
+## Escopo academico
 
-This API uses SQL directly through `psycopg`. It intentionally does not use an
-ORM, so the Phase 01 requirement of pure SQL remains preserved.
+Esta API usa SQL diretamente por meio do `psycopg`. Ela nao usa ORM de proposito,
+preservando o requisito da Etapa 1 de trabalhar com SQL puro.

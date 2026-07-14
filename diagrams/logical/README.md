@@ -1,3 +1,5 @@
-# Directory Purpose
+# Diagramas logicos
 
-This directory is prepared for the next implementation phase.
+Diretorio reservado para diagramas logicos complementares.
+
+O modelo relacional da Etapa 1 esta documentado em `docs/03-modeling/relational-model.md`.

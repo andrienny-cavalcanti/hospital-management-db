@@ -1,105 +1,100 @@
-# Hospital Management System DB
+﻿# Banco de Dados de Gestao Hospitalar
 
-Academic database project for a Hospital Management System developed for the Database course.
+Projeto academico de banco de dados para um Sistema de Gestao Hospitalar, desenvolvido para a disciplina de Banco de Dados.
 
-The project is organized to support two academic phases:
+O projeto foi organizado para apoiar duas etapas academicas:
 
-- **Phase 01 — Foundation:** relational modeling, SQL schema, seed data, CRUD queries and analytical queries.
-- **Phase 02 — Advanced:** stored procedures, triggers, views, ORM implementation and transaction control.
+- **Etapa 1 - Fundamentos:** modelagem relacional, schema SQL, dados de teste, consultas CRUD e consultas analiticas.
+- **Etapa 2 - Recursos avancados:** stored procedures, triggers, views, ORM e controle de transacoes.
 
-## Project Identity
+## Identidade do projeto
 
-- **Institutional context:** Hospital Universitário Dra. Yuska Maritan Brito
-- **Repository name:** `hospital-management-db`
-- **Local folder name:** `Hospital-Management-System-DB`
-- **Main database:** PostgreSQL
-- **Current status:** Phase 01 completed and Phase 02 prepared
+- **Contexto institucional:** Hospital Universitario Dra. Yuska Maritan Brito
+- **Nome do repositorio:** `hospital-management-db`
+- **Banco principal:** PostgreSQL
+- **Status atual:** Etapa 1 concluida, com Swagger opcional para demonstracao
 
-## Repository Structure
+## Estrutura do repositorio
 
 ```text
 Hospital-Management-System-DB
-├── .github
-│   ├── ISSUE_TEMPLATE
-│   └── workflows
-├── docs
-│   ├── 01-project
-│   ├── 02-analysis
-│   ├── 03-modeling
-│   ├── 04-database
-│   ├── 05-api
-│   ├── 06-orm
-│   ├── 07-tests
-│   └── assets
-├── database
-│   ├── schema
-│   ├── migrations
-│   ├── seeds
-│   ├── procedures
-│   ├── triggers
-│   ├── views
-│   ├── queries
-│   └── backups
-├── backend
-├── frontend
-├── diagrams
-│   ├── conceptual
-│   ├── logical
-│   ├── physical
-│   └── exports
-├── reports
-│   ├── phase-01
-│   └── phase-02
-├── presentations
-├── tests
-├── scripts
-├── CONTRIBUTING.md
-├── PROJECT_STATUS.md
-├── ROADMAP.md
-├── CHANGELOG.md
-└── README.md
+|-- .github
+|   |-- ISSUE_TEMPLATE
+|   `-- workflows
+|-- database
+|   |-- schema
+|   |-- seeds
+|   |-- queries
+|   |-- migrations
+|   |-- procedures
+|   |-- triggers
+|   |-- views
+|   `-- backups
+|-- diagrams
+|   |-- conceptual
+|   |-- exports
+|   |-- logical
+|   `-- physical
+|-- docs
+|   |-- 01-project
+|   |-- 02-analysis
+|   |-- 03-modeling
+|   |-- 04-database
+|   `-- 06-orm
+|-- reports
+|   |-- phase-01
+|   `-- phase-02
+|-- scripts
+|-- sql
+|-- backend
+|-- frontend
+|-- modelagem
+|-- presentations
+`-- README.md
 ```
 
-## Phase 01 Deliverables
+## Entregaveis da Etapa 1
 
-- Complete relational database schema
-- Test data inserts
-- CRUD operations using pure SQL
-- Basic and analytical queries
-- Relational model documentation
-- ER diagram justification with cardinalities and specialization decisions
-- 3NF normalization documentation
-- Phase 01 report
-- ER diagram export
+- Schema relacional completo do banco.
+- Insercao de dados de teste.
+- Operacoes CRUD usando SQL puro.
+- Consultas basicas e analiticas.
+- Documentacao do modelo relacional.
+- Justificativa do DER com cardinalidades e especializacoes.
+- Evidencia de normalizacao ate 3FN.
+- Relatorio da Etapa 1.
+- Exportacao do DER.
 
-## Installation and Execution
+## Instalacao e execucao
 
-Phase 01 uses **pure SQL only**. No ORM, backend or frontend is required to execute this delivery.
+A Etapa 1 usa **SQL puro**. Nenhum backend, frontend ou ORM e necessario para executar a entrega principal.
 
-### Prerequisites
+### Pre-requisitos
 
-- PostgreSQL installed and running.
-- `psql` available in the terminal.
-- A PostgreSQL user with permission to create databases and execute scripts.
+- PostgreSQL instalado e em execucao.
+- `psql` disponivel no terminal.
+- Usuario PostgreSQL com permissao para criar bancos e executar scripts.
 
-### 1. Create the database
+### 1. Criar o banco de dados
 
-Access PostgreSQL and create the project database:
+Acesse o PostgreSQL:
 
 ```bash
 psql -U postgres
 ```
+
+Crie o banco:
 
 ```sql
 CREATE DATABASE hospital_management_db;
 \q
 ```
 
-If the database already exists and you want to recreate the schema, the creation script can be executed again because it starts by dropping the project tables with `CASCADE`.
+Se o banco ja existir e voce quiser recriar o schema, o script de criacao pode ser executado novamente, pois ele inicia removendo as tabelas do projeto com `CASCADE`.
 
-### 2. Run the Phase 01 scripts
+### 2. Executar os scripts da Etapa 1
 
-From the repository root, execute the scripts in this order:
+A partir da raiz do repositorio, execute os scripts nesta ordem:
 
 ```bash
 psql -U postgres -d hospital_management_db -f database/schema/01-create-tables.sql
@@ -109,30 +104,30 @@ psql -U postgres -d hospital_management_db -f database/queries/03-crud-queries.s
 psql -U postgres -d hospital_management_db -f database/queries/04-analytical-queries.sql
 ```
 
-The `database/` directory is the official source for Phase 01 SQL scripts. The `sql/` directory is kept only as a pointer to avoid duplicated scripts and version drift.
+O diretorio `database/` e a fonte oficial dos scripts SQL da Etapa 1. O diretorio `sql/` foi mantido apenas como ponteiro para evitar duplicacao de scripts.
 
-### 3. What each script does
+### 3. Funcao de cada script
 
-- `database/schema/01-create-tables.sql`: creates all Phase 01 tables, primary keys, foreign keys, checks, unique constraints and indexes.
-- `database/seeds/02-seed-data.sql`: inserts test data required by the statement.
-- `database/queries/05-validation-counts.sql`: validates the minimum test data required for Phase 01.
-- `database/queries/03-crud-queries.sql`: demonstrates CRUD and basic queries using SQL only.
-- `database/queries/04-analytical-queries.sql`: runs the analytical queries required for Phase 01.
+- `database/schema/01-create-tables.sql`: cria tabelas, chaves primarias, chaves estrangeiras, checks, constraints unicas e indices.
+- `database/seeds/02-seed-data.sql`: insere os dados de teste exigidos no enunciado.
+- `database/queries/05-validation-counts.sql`: valida se os dados minimos da Etapa 1 foram inseridos.
+- `database/queries/03-crud-queries.sql`: demonstra CRUD e consultas basicas usando apenas SQL.
+- `database/queries/04-analytical-queries.sql`: executa as consultas analiticas exigidas na Etapa 1.
 
-### 4. Documentation for review
+### 4. Documentacao para avaliacao
 
-- Conceptual DER: `diagrams/conceptual/er-diagram.mmd`
-- DER export guide: `diagrams/conceptual/README.md`
-- DER justification: `docs/03-modeling/er-justification.md`
-- Relational model: `docs/03-modeling/relational-model.md`
-- Normalization evidence: `docs/03-modeling/normalization-3nf.md`
-- Execution guide: `docs/04-database/execution-guide.md`
+- DER conceitual: `diagrams/conceptual/er-diagram.mmd`
+- Guia de exportacao do DER: `diagrams/conceptual/README.md`
+- Justificativa do DER: `docs/03-modeling/er-justification.md`
+- Modelo relacional: `docs/03-modeling/relational-model.md`
+- Evidencia de normalizacao: `docs/03-modeling/normalization-3nf.md`
+- Guia de execucao: `docs/04-database/execution-guide.md`
 
-## Optional Swagger API
+## API Swagger opcional
 
-The project also includes an optional FastAPI backend in `backend/` to make data manipulation easier through Swagger UI.
+O projeto tambem inclui um backend opcional com FastAPI em `backend/`, criado para facilitar a manipulacao dos dados pelo Swagger UI.
 
-This API is only a support interface. The official Phase 01 delivery remains the pure SQL scripts in `database/`.
+Essa API e apenas uma interface de apoio. A entrega oficial da Etapa 1 continua sendo formada pelos scripts SQL puros em `database/`.
 
 ```bash
 cd backend
@@ -149,32 +144,6 @@ Swagger UI:
 http://127.0.0.1:8000/docs
 ```
 
-## Recommended Git Flow
+## Objetivo academico
 
-Main branches:
-
-- `main`: stable version for delivery
-- `develop`: integration branch for team work
-
-Feature branches:
-
-- `feature/database`
-- `feature/documentation`
-- `feature/procedures`
-- `feature/triggers`
-- `feature/views`
-- `feature/orm`
-- `feature/transactions`
-
-## Team Workflow
-
-1. Always update your local branch before working.
-2. Create a new feature branch.
-3. Commit with clear messages.
-4. Push your branch.
-5. Open a Pull Request into `develop`.
-6. Merge into `main` only after review.
-
-## Academic Objective
-
-This repository demonstrates database design and implementation through conceptual, logical and physical modeling, normalization, SQL operations, analytical queries and preparation for advanced database resources.
+Este repositorio demonstra projeto e implementacao de banco de dados por meio de modelagem conceitual, logica e fisica, normalizacao, operacoes SQL, consultas analiticas e preparacao para recursos avancados de banco de dados.

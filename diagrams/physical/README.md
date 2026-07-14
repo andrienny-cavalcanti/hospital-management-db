@@ -1,3 +1,5 @@
-# Directory Purpose
+# Diagramas fisicos
 
-This directory is prepared for the next implementation phase.
+Diretorio reservado para diagramas fisicos complementares.
+
+O schema fisico da Etapa 1 esta implementado em `database/schema/01-create-tables.sql`.

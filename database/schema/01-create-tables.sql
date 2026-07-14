@@ -1,8 +1,7 @@
 -- =============================================================
 -- Projeto de Banco de Dados - Etapa 1
 -- Sistema de Gestao Hospitalar Dra. Yuska Maritan Brito
--- Banco sugerido: PostgreSQL
--- Arquivo oficial: database/schema/01-create-tables.sql
+-- Banco: PostgreSQL
 -- =============================================================
 
 DROP TABLE IF EXISTS procedimento_realizado CASCADE;

@@ -1,17 +1,17 @@
-# ORM Plan for Phase 02
+# Plano de ORM para a Etapa 2
 
-The ORM layer will reimplement Phase 01 operations using an object-relational mapping tool.
+A camada ORM devera reimplementar as operacoes da Etapa 1 usando uma ferramenta de mapeamento objeto-relacional.
 
-Recommended options:
+Opcoes recomendadas:
 
-- Python with SQLAlchemy
-- Node.js with Prisma
+- Python com SQLAlchemy.
+- Node.js com Prisma.
 
-## Required demonstrations
+## Demonstracoes exigidas
 
-- Entity/class mapping
-- Relationships
-- Transactions
-- ORM filters/DSL queries
-- Lazy loading vs eager loading
-- Advanced analytical queries
+- Mapeamento de entidades/classes.
+- Relacionamentos.
+- Transacoes.
+- Consultas usando filtros/DSL da ORM.
+- Lazy loading vs eager loading.
+- Consultas analiticas avancadas.

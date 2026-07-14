@@ -1,3 +1,5 @@
-# Directory Purpose
+# Views
 
-This directory is prepared for the next implementation phase.
+Diretorio reservado para views da Etapa 2.
+
+Na Etapa 1, as consultas exigidas ficam em `database/queries/`.

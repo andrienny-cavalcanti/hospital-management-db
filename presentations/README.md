@@ -1,3 +1,5 @@
-# Directory Purpose
+# Apresentacoes
 
-This directory is prepared for the next implementation phase.
+Diretorio reservado para materiais de apresentacao do projeto.
+
+Sugestao: usar este espaco para slides, roteiro de apresentacao ou imagens exportadas para demonstracao.

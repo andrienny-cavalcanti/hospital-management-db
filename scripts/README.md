@@ -1,18 +1,18 @@
 # Scripts
 
-This directory stores helper scripts for executing or validating the project.
+Este diretorio armazena scripts auxiliares para executar ou validar o projeto.
 
-## Available scripts
+## Scripts disponiveis
 
-- `run-phase-01.sh`: runs the official Phase 01 SQL flow using the scripts in `database/`.
+- `run-phase-01.sh`: executa o fluxo SQL oficial da Etapa 1 usando os scripts em `database/`.
 
-Usage:
+Uso:
 
 ```bash
 bash scripts/run-phase-01.sh
 ```
 
-Optional parameters:
+Parametros opcionais:
 
 ```bash
 bash scripts/run-phase-01.sh hospital_management_db postgres
