@@ -1,3 +1,5 @@
-# Directory Purpose
+# Relatorios da Etapa 2
 
-This directory is prepared for the next implementation phase.
+Diretorio reservado para relatorios da Etapa 2.
+
+O relatorio da Etapa 1 fica em `reports/phase-01/`.

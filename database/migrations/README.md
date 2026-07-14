@@ -1,3 +1,5 @@
-# Directory Purpose
+# Migrations
 
-This directory is prepared for the next implementation phase.
+Diretorio reservado para futuras migrations do banco.
+
+Na Etapa 1, a criacao do schema e feita diretamente pelo script `database/schema/01-create-tables.sql`.

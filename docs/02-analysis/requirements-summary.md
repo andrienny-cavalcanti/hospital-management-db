@@ -1,35 +1,35 @@
-# Requirements Summary
+# Resumo dos requisitos
 
-## Main Entities
+## Entidades principais
 
-- Person
-- Patient
-- Professional
-- Resident
+- Pessoa
+- Paciente
+- Profissional
+- Residente
 - Preceptor
-- Unit
-- Appointment
-- Procedure
-- Performed Procedure
-- Duty Schedule
+- Unidade
+- Atendimento
+- Procedimento
+- Procedimento realizado
+- Escala de plantao
 
-## Phase 01 Requirements
+## Requisitos da Etapa 1
 
-- ER diagram
-- Relational model
-- Normalization evidence up to 3NF
-- SQL table creation script
-- Test data insertion
-- CRUD operations
-- Basic queries
-- Analytical queries
-- README and presentation support
+- DER.
+- Modelo relacional.
+- Evidencia de normalizacao ate 3FN.
+- Script SQL de criacao das tabelas.
+- Insercao de dados de teste.
+- Operacoes CRUD.
+- Consultas basicas.
+- Consultas analiticas.
+- README e apoio para apresentacao.
 
-## Phase 02 Requirements
+## Requisitos da Etapa 2
 
-- Stored procedures
-- Triggers
-- Views
-- ORM implementation
-- Advanced ORM queries
-- Concurrency and transaction control
+- Stored procedures.
+- Triggers.
+- Views.
+- Implementacao com ORM.
+- Consultas avancadas com ORM.
+- Controle de concorrencia e transacoes.
