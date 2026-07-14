@@ -1,13 +1,93 @@
+%% DER Conceitual - Etapa 1
+%% Sistema de Gestao Hospitalar Dra. Yuska Maritan Brito
+%% Legenda: PK = chave primaria, FK = chave estrangeira, UK = chave unica.
 erDiagram
-    PESSOA ||--o| PACIENTE : especializa
-    PESSOA ||--o| PROFISSIONAL : especializa
-    PROFISSIONAL ||--o| RESIDENTE : papel
-    PROFISSIONAL ||--o| PRECEPTOR : papel
-    PACIENTE ||--o{ ATENDIMENTO : possui
+    PESSOA {
+        int id_pessoa PK
+        string nome
+        string cpf UK
+        date data_nascimento
+        boolean is_flamengo
+        string telefone
+    }
+
+    PACIENTE {
+        int id_pessoa PK, FK
+        string num_convenio UK
+        string alergias
+        string grupo_sanguineo
+        string endereco
+    }
+
+    PROFISSIONAL {
+        int id_pessoa PK, FK
+        string crm UK
+        date data_admissao
+        string especialidade
+    }
+
+    RESIDENTE {
+        int id_profissional PK, FK
+        string ano_residencia
+    }
+
+    PRECEPTOR {
+        int id_profissional PK, FK
+        string titulacao
+    }
+
+    UNIDADE {
+        int id_unidade PK
+        string nome UK
+        string tipo
+        int capacidade_leitos
+    }
+
+    ATENDIMENTO {
+        int id_atendimento PK
+        datetime data_hora
+        int duracao_minutos
+        int id_paciente FK
+        int id_residente FK
+        int id_preceptor FK
+    }
+
+    PROCEDIMENTO {
+        int id_procedimento PK
+        string codigo UK
+        string nome
+        int tempo_medio_minutos
+        string nivel_risco
+    }
+
+    PROCEDIMENTO_REALIZADO {
+        int id_atendimento PK, FK
+        int id_procedimento PK, FK
+        int quantidade
+        int tempo_real_minutos
+        string observacao
+        boolean faturado
+    }
+
+    ESCALA {
+        int id_escala PK
+        int id_unidade FK
+        date data_plantao
+        string dia_semana
+        string turno
+        int id_residente FK
+        int id_preceptor FK
+    }
+
+    PESSOA ||--o| PACIENTE : especializa_como
+    PESSOA ||--o| PROFISSIONAL : especializa_como
+    PROFISSIONAL ||--o| RESIDENTE : atua_como
+    PROFISSIONAL ||--o| PRECEPTOR : atua_como
+    PACIENTE ||--o{ ATENDIMENTO : recebe
     RESIDENTE ||--o{ ATENDIMENTO : realiza
     PRECEPTOR ||--o{ ATENDIMENTO : supervisiona
     ATENDIMENTO ||--|{ PROCEDIMENTO_REALIZADO : contem
     PROCEDIMENTO ||--o{ PROCEDIMENTO_REALIZADO : executado_em
     UNIDADE ||--o{ ESCALA : organiza
-    RESIDENTE ||--o{ ESCALA : escalado
+    RESIDENTE ||--o{ ESCALA : escalado_em
     PRECEPTOR ||--o{ ESCALA : supervisiona

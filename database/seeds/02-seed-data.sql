@@ -1,6 +1,6 @@
 -- =============================================================
 -- Dados de teste - Etapa 1
--- Execute apos 01_schema.sql
+-- Execute apos database/schema/01-create-tables.sql
 -- =============================================================
 
 -- Pacientes

@@ -2,7 +2,7 @@
 -- Projeto de Banco de Dados - Etapa 1
 -- Sistema de Gestao Hospitalar Dra. Yuska Maritan Brito
 -- Banco sugerido: PostgreSQL
--- Arquivo: 01_schema.sql
+-- Arquivo oficial: database/schema/01-create-tables.sql
 -- =============================================================
 
 DROP TABLE IF EXISTS procedimento_realizado CASCADE;
@@ -31,6 +31,7 @@ CREATE TABLE paciente (
     num_convenio VARCHAR(40) NOT NULL UNIQUE,
     alergias TEXT,
     grupo_sanguineo VARCHAR(3) NOT NULL,
+    -- Campo complementar ao enunciado: usado no CRUD de atualizacao do paciente.
     endereco VARCHAR(160),
     CHECK (grupo_sanguineo IN ('A+','A-','B+','B-','AB+','AB-','O+','O-'))
 );
@@ -67,6 +68,7 @@ CREATE TABLE procedimento (
     codigo VARCHAR(20) NOT NULL UNIQUE,
     nome VARCHAR(100) NOT NULL,
     tempo_medio_minutos INTEGER NOT NULL,
+    -- Campo complementar ao enunciado: usado na consulta analitica de risco ALTO.
     nivel_risco VARCHAR(10) NOT NULL DEFAULT 'BAIXO',
     CHECK (tempo_medio_minutos > 0),
     CHECK (nivel_risco IN ('BAIXO','MEDIO','ALTO'))
@@ -89,6 +91,7 @@ CREATE TABLE procedimento_realizado (
     quantidade INTEGER NOT NULL,
     tempo_real_minutos INTEGER NOT NULL,
     observacao TEXT,
+    -- Campo complementar ao enunciado: permite remover apenas procedimentos nao faturados.
     faturado BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id_atendimento, id_procedimento),
     CHECK (quantidade > 0),
@@ -98,13 +101,14 @@ CREATE TABLE procedimento_realizado (
 CREATE TABLE escala (
     id_escala SERIAL PRIMARY KEY,
     id_unidade INTEGER NOT NULL REFERENCES unidade(id_unidade),
+    -- Campo complementar ao enunciado: permite consultas de escala por mes.
     data_plantao DATE NOT NULL,
     dia_semana VARCHAR(15) NOT NULL,
     turno VARCHAR(10) NOT NULL,
     id_residente INTEGER NOT NULL REFERENCES residente(id_profissional),
     id_preceptor INTEGER NOT NULL REFERENCES preceptor(id_profissional),
-    UNIQUE (id_unidade, dia_semana, turno, id_residente),
-    UNIQUE (id_unidade, data_plantao, turno, id_residente),
+    CONSTRAINT uq_escala_regra_enunciado UNIQUE (id_unidade, dia_semana, turno, id_residente),
+    CONSTRAINT uq_escala_data_plantao UNIQUE (id_unidade, data_plantao, turno, id_residente),
     CHECK (dia_semana IN ('segunda','terca','quarta','quinta','sexta','sabado','domingo')),
     CHECK (turno IN ('manha','tarde','noite')),
     CHECK (id_residente <> id_preceptor)

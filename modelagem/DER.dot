@@ -1,6 +1,17 @@
 digraph DER {
-	nodesep=0.45 rankdir=LR ranksep=0.8 splines=ortho
-	node [fontname=Arial fontsize=9 shape=record]
+	graph [
+		fontname=Arial
+		fontsize=18
+		label="DER Conceitual - Sistema de Gestao Hospitalar Dra. Yuska Maritan Brito\nEtapa 1 | PK = chave primaria | FK = chave estrangeira | UQ = chave unica"
+		labelloc=t
+		nodesep=0.45
+		rankdir=LR
+		ranksep=0.8
+		splines=ortho
+	]
+	node [fontname=Arial fontsize=9 shape=record style="rounded,filled" fillcolor="#F8FAFC" color="#334155"]
+	edge [fontname=Arial fontsize=8 color="#475569"]
+
 	PESSOA [label="{PESSOA|PK id_pessoa\lnome\lcpf UQ\ldata_nascimento\lis_flamengo\ltelefone\l}"]
 	PACIENTE [label="{PACIENTE|PK/FK id_pessoa\lnum_convenio UQ\lalergias\lgrupo_sanguineo\lendereco\l}"]
 	PROFISSIONAL [label="{PROFISSIONAL|PK/FK id_pessoa\lcrm UQ\ldata_admissao\lespecialidade\l}"]
@@ -10,17 +21,46 @@ digraph DER {
 	ATENDIMENTO [label="{ATENDIMENTO|PK id_atendimento\ldata_hora\lduracao_minutos\lFK id_paciente\lFK id_residente\lFK id_preceptor\l}"]
 	PROCEDIMENTO [label="{PROCEDIMENTO|PK id_procedimento\lcodigo UQ\lnome\ltempo_medio_minutos\lnivel_risco\l}"]
 	PROC_REALIZADO [label="{PROCEDIMENTO_REALIZADO|PK/FK id_atendimento\lPK/FK id_procedimento\lquantidade\ltempo_real_minutos\lobservacao\lfaturado\l}"]
-	ESCALA [label="{ESCALA|PK id_escala\lFK id_unidade\ldata_plantao\ldia_semana\lturno\lFK id_residente\lFK id_preceptor\lUQ unidade+dia+turno+residente\l}"]
-	PESSOA -> PACIENTE [label="1 -> 0..1"]
-	PESSOA -> PROFISSIONAL [label="1 -> 0..1"]
-	PROFISSIONAL -> RESIDENTE [label="1 -> 0..1"]
-	PROFISSIONAL -> PRECEPTOR [label="1 -> 0..1"]
-	PACIENTE -> ATENDIMENTO [label="1 -> N"]
-	RESIDENTE -> ATENDIMENTO [label="1 -> N"]
-	PRECEPTOR -> ATENDIMENTO [label="1 -> N"]
-	ATENDIMENTO -> PROC_REALIZADO [label="1 -> N"]
-	PROCEDIMENTO -> PROC_REALIZADO [label="1 -> N"]
-	UNIDADE -> ESCALA [label="1 -> N"]
-	RESIDENTE -> ESCALA [label="1 -> N"]
-	PRECEPTOR -> ESCALA [label="1 -> N"]
+	ESCALA [label="{ESCALA|PK id_escala\lFK id_unidade\ldata_plantao\ldia_semana\lturno\lFK id_residente\lFK id_preceptor\lUQ unidade+dia+turno+residente\lUQ unidade+data+turno+residente\l}"]
+
+	subgraph cluster_cadastros {
+		label="Cadastros e especializacoes"
+		color="#CBD5E1"
+		style="rounded,dashed"
+		PESSOA
+		PACIENTE
+		PROFISSIONAL
+		RESIDENTE
+		PRECEPTOR
+	}
+
+	subgraph cluster_atendimentos {
+		label="Atendimentos e procedimentos"
+		color="#CBD5E1"
+		style="rounded,dashed"
+		ATENDIMENTO
+		PROCEDIMENTO
+		PROC_REALIZADO
+	}
+
+	subgraph cluster_escalas {
+		label="Unidades e escalas"
+		color="#CBD5E1"
+		style="rounded,dashed"
+		UNIDADE
+		ESCALA
+	}
+
+	PESSOA -> PACIENTE [label="especializa | 1 -> 0..1"]
+	PESSOA -> PROFISSIONAL [label="especializa | 1 -> 0..1"]
+	PROFISSIONAL -> RESIDENTE [label="atua como | 1 -> 0..1"]
+	PROFISSIONAL -> PRECEPTOR [label="atua como | 1 -> 0..1"]
+	PACIENTE -> ATENDIMENTO [label="recebe | 1 -> N"]
+	RESIDENTE -> ATENDIMENTO [label="realiza | 1 -> N"]
+	PRECEPTOR -> ATENDIMENTO [label="supervisiona | 1 -> N"]
+	ATENDIMENTO -> PROC_REALIZADO [label="contem | 1 -> N"]
+	PROCEDIMENTO -> PROC_REALIZADO [label="executado em | 1 -> N"]
+	UNIDADE -> ESCALA [label="organiza | 1 -> N"]
+	RESIDENTE -> ESCALA [label="escalado em | 1 -> N"]
+	PRECEPTOR -> ESCALA [label="supervisiona | 1 -> N"]
 }
