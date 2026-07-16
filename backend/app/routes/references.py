@@ -1,254 +1,236 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from psycopg import Connection
-from psycopg.errors import CheckViolation, ForeignKeyViolation, UniqueViolation
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, joinedload
 
-from app.db import get_connection
+from app.db import get_session
+from app.models import (
+    Escala,
+    Pessoa,
+    Preceptor,
+    Procedimento,
+    Profissional,
+    Residente,
+    Unidade,
+)
 from app.schemas import PreceptorCreate, ProcedureCreate, ResidentCreate, ScheduleCreate, UnitCreate
+from app.services.scheduling import (
+    ResidentNotFoundError,
+    ScheduleConflictError,
+    create_schedule_with_lock,
+)
+from app.serializers import (
+    preceptor_dict,
+    procedure_dict,
+    resident_dict,
+    schedule_dict,
+    unit_dict,
+)
 
 router = APIRouter(tags=["Cadastros auxiliares"])
 
 
+def _person_from_payload(payload: ResidentCreate | PreceptorCreate) -> Pessoa:
+    return Pessoa(
+        nome=payload.nome,
+        cpf=payload.cpf,
+        data_nascimento=payload.data_nascimento,
+        is_flamengo=payload.is_flamengo,
+        telefone=payload.telefone,
+    )
+
+
+def _professional_from_payload(
+    payload: ResidentCreate | PreceptorCreate,
+    person: Pessoa,
+) -> Profissional:
+    return Profissional(
+        pessoa=person,
+        crm=payload.crm,
+        data_admissao=payload.data_admissao,
+        especialidade=payload.especialidade,
+    )
+
+
 @router.get("/residentes")
-def list_residents(conn: Connection = Depends(get_connection)):
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            SELECT p.id_pessoa, p.nome, prof.crm, prof.especialidade, r.ano_residencia
-            FROM residente r
-            JOIN profissional prof ON prof.id_pessoa = r.id_profissional
-            JOIN pessoa p ON p.id_pessoa = r.id_profissional
-            ORDER BY p.nome;
-            """
+def list_residents(session: Session = Depends(get_session)):
+    statement = (
+        select(Residente)
+        .join(Residente.profissional)
+        .join(Profissional.pessoa)
+        .options(
+            joinedload(Residente.profissional).joinedload(Profissional.pessoa)
         )
-        return cur.fetchall()
+        .order_by(Pessoa.nome)
+    )
+    return [resident_dict(resident) for resident in session.scalars(statement)]
 
 
 @router.post("/residentes", status_code=status.HTTP_201_CREATED)
-def create_resident(payload: ResidentCreate, conn: Connection = Depends(get_connection)):
+def create_resident(
+    payload: ResidentCreate,
+    session: Session = Depends(get_session),
+):
+    person = _person_from_payload(payload)
+    professional = _professional_from_payload(payload, person)
+    resident = Residente(
+        profissional=professional,
+        ano_residencia=payload.ano_residencia,
+    )
+
     try:
-        with conn.transaction():
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO pessoa (nome, cpf, data_nascimento, is_flamengo, telefone)
-                    VALUES (%s, %s, %s, %s, %s)
-                    RETURNING id_pessoa, nome, cpf, data_nascimento, is_flamengo, telefone;
-                    """,
-                    (
-                        payload.nome,
-                        payload.cpf,
-                        payload.data_nascimento,
-                        payload.is_flamengo,
-                        payload.telefone,
-                    ),
-                )
-                person = cur.fetchone()
-                cur.execute(
-                    """
-                    INSERT INTO profissional (id_pessoa, crm, data_admissao, especialidade)
-                    VALUES (%s, %s, %s, %s)
-                    RETURNING crm, data_admissao, especialidade;
-                    """,
-                    (
-                        person["id_pessoa"],
-                        payload.crm,
-                        payload.data_admissao,
-                        payload.especialidade,
-                    ),
-                )
-                professional = cur.fetchone()
-                cur.execute(
-                    """
-                    INSERT INTO residente (id_profissional, ano_residencia)
-                    VALUES (%s, %s)
-                    RETURNING ano_residencia;
-                    """,
-                    (person["id_pessoa"], payload.ano_residencia),
-                )
-                resident = cur.fetchone()
-                return {**person, **professional, **resident}
-    except UniqueViolation as exc:
+        session.add(resident)
+        session.commit()
+        return resident_dict(resident)
+    except IntegrityError as exc:
+        session.rollback()
         raise HTTPException(status_code=409, detail="CPF ou CRM ja cadastrado.") from exc
 
 
 @router.get("/preceptores")
-def list_preceptors(conn: Connection = Depends(get_connection)):
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            SELECT p.id_pessoa, p.nome, prof.crm, prof.especialidade, pr.titulacao
-            FROM preceptor pr
-            JOIN profissional prof ON prof.id_pessoa = pr.id_profissional
-            JOIN pessoa p ON p.id_pessoa = pr.id_profissional
-            ORDER BY p.nome;
-            """
+def list_preceptors(session: Session = Depends(get_session)):
+    statement = (
+        select(Preceptor)
+        .join(Preceptor.profissional)
+        .join(Profissional.pessoa)
+        .options(
+            joinedload(Preceptor.profissional).joinedload(Profissional.pessoa)
         )
-        return cur.fetchall()
+        .order_by(Pessoa.nome)
+    )
+    return [
+        preceptor_dict(preceptor)
+        for preceptor in session.scalars(statement)
+    ]
 
 
 @router.post("/preceptores", status_code=status.HTTP_201_CREATED)
-def create_preceptor(payload: PreceptorCreate, conn: Connection = Depends(get_connection)):
+def create_preceptor(
+    payload: PreceptorCreate,
+    session: Session = Depends(get_session),
+):
+    person = _person_from_payload(payload)
+    professional = _professional_from_payload(payload, person)
+    preceptor = Preceptor(
+        profissional=professional,
+        titulacao=payload.titulacao,
+    )
+
     try:
-        with conn.transaction():
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO pessoa (nome, cpf, data_nascimento, is_flamengo, telefone)
-                    VALUES (%s, %s, %s, %s, %s)
-                    RETURNING id_pessoa, nome, cpf, data_nascimento, is_flamengo, telefone;
-                    """,
-                    (
-                        payload.nome,
-                        payload.cpf,
-                        payload.data_nascimento,
-                        payload.is_flamengo,
-                        payload.telefone,
-                    ),
-                )
-                person = cur.fetchone()
-                cur.execute(
-                    """
-                    INSERT INTO profissional (id_pessoa, crm, data_admissao, especialidade)
-                    VALUES (%s, %s, %s, %s)
-                    RETURNING crm, data_admissao, especialidade;
-                    """,
-                    (
-                        person["id_pessoa"],
-                        payload.crm,
-                        payload.data_admissao,
-                        payload.especialidade,
-                    ),
-                )
-                professional = cur.fetchone()
-                cur.execute(
-                    """
-                    INSERT INTO preceptor (id_profissional, titulacao)
-                    VALUES (%s, %s)
-                    RETURNING titulacao;
-                    """,
-                    (person["id_pessoa"], payload.titulacao),
-                )
-                preceptor = cur.fetchone()
-                return {**person, **professional, **preceptor}
-    except UniqueViolation as exc:
+        session.add(preceptor)
+        session.commit()
+        return preceptor_dict(preceptor)
+    except IntegrityError as exc:
+        session.rollback()
         raise HTTPException(status_code=409, detail="CPF ou CRM ja cadastrado.") from exc
 
 
 @router.get("/unidades")
-def list_units(conn: Connection = Depends(get_connection)):
-    with conn.cursor() as cur:
-        cur.execute("SELECT * FROM unidade ORDER BY nome;")
-        return cur.fetchall()
+def list_units(session: Session = Depends(get_session)):
+    statement = select(Unidade).order_by(Unidade.nome)
+    return [unit_dict(unit) for unit in session.scalars(statement)]
 
 
 @router.post("/unidades", status_code=status.HTTP_201_CREATED)
-def create_unit(payload: UnitCreate, conn: Connection = Depends(get_connection)):
+def create_unit(payload: UnitCreate, session: Session = Depends(get_session)):
+    unit = Unidade(**payload.model_dump())
     try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO unidade (nome, tipo, capacidade_leitos)
-                VALUES (%s, %s, %s)
-                RETURNING *;
-                """,
-                (payload.nome, payload.tipo, payload.capacidade_leitos),
-            )
-            row = cur.fetchone()
-            conn.commit()
-            return row
-    except UniqueViolation as exc:
+        session.add(unit)
+        session.commit()
+        return unit_dict(unit)
+    except IntegrityError as exc:
+        session.rollback()
         raise HTTPException(status_code=409, detail="Unidade ja cadastrada.") from exc
 
 
 @router.get("/procedimentos")
-def list_procedures(conn: Connection = Depends(get_connection)):
-    with conn.cursor() as cur:
-        cur.execute("SELECT * FROM procedimento ORDER BY nome;")
-        return cur.fetchall()
+def list_procedures(session: Session = Depends(get_session)):
+    statement = select(Procedimento).order_by(Procedimento.nome)
+    return [
+        procedure_dict(procedure)
+        for procedure in session.scalars(statement)
+    ]
 
 
 @router.post("/procedimentos", status_code=status.HTTP_201_CREATED)
-def create_procedure(payload: ProcedureCreate, conn: Connection = Depends(get_connection)):
+def create_procedure(
+    payload: ProcedureCreate,
+    session: Session = Depends(get_session),
+):
+    procedure = Procedimento(**payload.model_dump())
     try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO procedimento (codigo, nome, tempo_medio_minutos, nivel_risco)
-                VALUES (%s, %s, %s, %s)
-                RETURNING *;
-                """,
-                (
-                    payload.codigo,
-                    payload.nome,
-                    payload.tempo_medio_minutos,
-                    payload.nivel_risco,
-                ),
-            )
-            row = cur.fetchone()
-            conn.commit()
-            return row
-    except UniqueViolation as exc:
+        session.add(procedure)
+        session.commit()
+        return procedure_dict(procedure)
+    except IntegrityError as exc:
+        session.rollback()
         raise HTTPException(status_code=409, detail="Codigo de procedimento ja cadastrado.") from exc
 
 
 @router.get("/escalas")
-def list_schedules(conn: Connection = Depends(get_connection)):
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            SELECT
-                e.id_escala,
-                u.nome AS unidade,
-                e.data_plantao,
-                e.dia_semana,
-                e.turno,
-                residente.nome AS residente,
-                preceptor.nome AS preceptor
-            FROM escala e
-            JOIN unidade u ON u.id_unidade = e.id_unidade
-            JOIN pessoa residente ON residente.id_pessoa = e.id_residente
-            JOIN pessoa preceptor ON preceptor.id_pessoa = e.id_preceptor
-            ORDER BY e.data_plantao, e.turno, u.nome;
-            """
+def list_schedules(session: Session = Depends(get_session)):
+    statement = (
+        select(Escala)
+        .join(Escala.unidade)
+        .options(
+            joinedload(Escala.unidade),
+            joinedload(Escala.residente)
+            .joinedload(Residente.profissional)
+            .joinedload(Profissional.pessoa),
+            joinedload(Escala.preceptor)
+            .joinedload(Preceptor.profissional)
+            .joinedload(Profissional.pessoa),
         )
-        return cur.fetchall()
+        .order_by(Escala.data_plantao, Escala.turno, Unidade.nome)
+    )
+    return [schedule_dict(schedule) for schedule in session.scalars(statement)]
 
 
 @router.post("/escalas", status_code=status.HTTP_201_CREATED)
-def create_schedule(payload: ScheduleCreate, conn: Connection = Depends(get_connection)):
+def create_schedule(
+    payload: ScheduleCreate,
+    session: Session = Depends(get_session),
+):
     if payload.id_residente == payload.id_preceptor:
         raise HTTPException(status_code=400, detail="Residente e preceptor devem ser diferentes.")
 
+    schedule = Escala(**payload.model_dump())
     try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO escala (
-                    id_unidade,
-                    data_plantao,
-                    dia_semana,
-                    turno,
-                    id_residente,
-                    id_preceptor
-                )
-                VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING *;
-                """,
-                (
-                    payload.id_unidade,
-                    payload.data_plantao,
-                    payload.dia_semana,
-                    payload.turno,
-                    payload.id_residente,
-                    payload.id_preceptor,
-                ),
+        with session.begin():
+            create_schedule_with_lock(session, schedule)
+        statement = (
+            select(Escala)
+            .where(Escala.id_escala == schedule.id_escala)
+            .options(
+                joinedload(Escala.unidade),
+                joinedload(Escala.residente)
+                .joinedload(Residente.profissional)
+                .joinedload(Profissional.pessoa),
+                joinedload(Escala.preceptor)
+                .joinedload(Preceptor.profissional)
+                .joinedload(Profissional.pessoa),
             )
-            row = cur.fetchone()
-            conn.commit()
-            return row
-    except UniqueViolation as exc:
-        raise HTTPException(status_code=409, detail="Escala duplicada para a regra definida.") from exc
-    except ForeignKeyViolation as exc:
-        raise HTTPException(status_code=400, detail="Unidade, residente ou preceptor inexistente.") from exc
-    except CheckViolation as exc:
-        raise HTTPException(status_code=400, detail="Dados de escala violam uma regra CHECK.") from exc
+        )
+        return schedule_dict(session.scalar(statement))
+    except ScheduleConflictError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        ) from exc
+    except ResidentNotFoundError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+    except IntegrityError as exc:
+        session.rollback()
+        sqlstate = getattr(exc.orig, "sqlstate", None)
+        if sqlstate == "23505":
+            raise HTTPException(
+                status_code=409,
+                detail="Escala duplicada ou sobreposta.",
+            ) from exc
+        raise HTTPException(
+            status_code=400,
+            detail="Dados de escala violam uma regra de integridade.",
+        ) from exc
