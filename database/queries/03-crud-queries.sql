@@ -3,7 +3,7 @@
 -- =============================================================
 
 -- 1) Inserir novo atendimento verificando se paciente, residente e preceptor existem.
--- Troque os valores do CTE params quando necessario.
+-- Os identificadores abaixo existem em database/seeds/02-seed-data.sql.
 WITH params AS (
     SELECT
         TIMESTAMP '2026-07-15 10:30' AS data_hora,

@@ -1,118 +1,97 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from psycopg import Connection
-from psycopg.errors import ForeignKeyViolation, UniqueViolation
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, joinedload
 
-from app.db import get_connection
+from app.db import get_session
+from app.models import (
+    Atendimento,
+    Paciente,
+    Preceptor,
+    Procedimento,
+    ProcedimentoRealizado,
+    Residente,
+    Unidade,
+)
 from app.schemas import AppointmentCreate, PerformedProcedureCreate
+from app.serializers import appointment_dict, performed_procedure_dict
 
 router = APIRouter(prefix="/atendimentos", tags=["Atendimentos"])
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-def create_appointment(payload: AppointmentCreate, conn: Connection = Depends(get_connection)):
+def create_appointment(
+    payload: AppointmentCreate,
+    session: Session = Depends(get_session),
+):
     if payload.id_residente == payload.id_preceptor:
         raise HTTPException(status_code=400, detail="Residente e preceptor devem ser diferentes.")
 
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            INSERT INTO atendimento (
-                data_hora,
-                duracao_minutos,
-                id_paciente,
-                id_residente,
-                id_preceptor
-            )
-            SELECT %s, %s, %s, %s, %s
-            WHERE EXISTS (SELECT 1 FROM paciente WHERE id_pessoa = %s)
-              AND EXISTS (SELECT 1 FROM residente WHERE id_profissional = %s)
-              AND EXISTS (SELECT 1 FROM preceptor WHERE id_profissional = %s)
-            RETURNING *;
-            """,
-            (
-                payload.data_hora,
-                payload.duracao_minutos,
-                payload.id_paciente,
-                payload.id_residente,
-                payload.id_preceptor,
-                payload.id_paciente,
-                payload.id_residente,
-                payload.id_preceptor,
-            ),
+    references = (
+        session.get(Paciente, payload.id_paciente),
+        session.get(Residente, payload.id_residente),
+        session.get(Preceptor, payload.id_preceptor),
+        session.get(Unidade, payload.id_unidade),
+    )
+    if any(reference is None for reference in references):
+        raise HTTPException(
+            status_code=400,
+            detail="Paciente, residente, preceptor ou unidade inexistente.",
         )
-        row = cur.fetchone()
-        if row is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Paciente, residente ou preceptor inexistente.",
-            )
-        conn.commit()
-        return row
+
+    appointment = Atendimento(**payload.model_dump())
+    try:
+        session.add(appointment)
+        session.commit()
+        return appointment_dict(appointment)
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Atendimento viola uma regra de integridade.",
+        ) from exc
 
 
 @router.get("/{id_atendimento}/procedimentos")
-def list_appointment_procedures(id_atendimento: int, conn: Connection = Depends(get_connection)):
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            SELECT
-                pr.id_atendimento,
-                pr.id_procedimento,
-                proc.nome AS procedimento,
-                proc.nivel_risco,
-                pr.quantidade,
-                pr.tempo_real_minutos,
-                pr.observacao,
-                pr.faturado
-            FROM procedimento_realizado pr
-            JOIN procedimento proc ON proc.id_procedimento = pr.id_procedimento
-            WHERE pr.id_atendimento = %s
-            ORDER BY proc.nome;
-            """,
-            (id_atendimento,),
-        )
-        return cur.fetchall()
+def list_appointment_procedures(
+    id_atendimento: int,
+    session: Session = Depends(get_session),
+):
+    statement = (
+        select(ProcedimentoRealizado)
+        .join(ProcedimentoRealizado.procedimento)
+        .where(ProcedimentoRealizado.id_atendimento == id_atendimento)
+        .options(joinedload(ProcedimentoRealizado.procedimento))
+        .order_by(Procedimento.nome)
+    )
+    return [
+        performed_procedure_dict(item)
+        for item in session.scalars(statement)
+    ]
 
 
 @router.post("/{id_atendimento}/procedimentos", status_code=status.HTTP_201_CREATED)
 def add_appointment_procedure(
     id_atendimento: int,
     payload: PerformedProcedureCreate,
-    conn: Connection = Depends(get_connection),
+    session: Session = Depends(get_session),
 ):
+    if session.get(Atendimento, id_atendimento) is None:
+        raise HTTPException(status_code=400, detail="Atendimento inexistente.")
+    if session.get(Procedimento, payload.id_procedimento) is None:
+        raise HTTPException(status_code=400, detail="Procedimento inexistente.")
+
+    item = ProcedimentoRealizado(
+        id_atendimento=id_atendimento,
+        **payload.model_dump(),
+    )
     try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO procedimento_realizado (
-                    id_atendimento,
-                    id_procedimento,
-                    quantidade,
-                    tempo_real_minutos,
-                    observacao,
-                    faturado
-                )
-                VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING *;
-                """,
-                (
-                    id_atendimento,
-                    payload.id_procedimento,
-                    payload.quantidade,
-                    payload.tempo_real_minutos,
-                    payload.observacao,
-                    payload.faturado,
-                ),
-            )
-            row = cur.fetchone()
-            conn.commit()
-            return row
-    except ForeignKeyViolation as exc:
-        raise HTTPException(
-            status_code=400,
-            detail="Atendimento ou procedimento inexistente.",
-        ) from exc
-    except UniqueViolation as exc:
+        session.add(item)
+        session.commit()
+        session.refresh(item, attribute_names=["procedimento"])
+        return performed_procedure_dict(item)
+    except IntegrityError as exc:
+        session.rollback()
         raise HTTPException(
             status_code=409,
             detail="Procedimento ja registrado para este atendimento.",
@@ -123,24 +102,20 @@ def add_appointment_procedure(
 def delete_appointment_procedure(
     id_atendimento: int,
     id_procedimento: int,
-    conn: Connection = Depends(get_connection),
+    session: Session = Depends(get_session),
 ):
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            DELETE FROM procedimento_realizado
-            WHERE id_atendimento = %s
-              AND id_procedimento = %s
-              AND faturado = FALSE
-            RETURNING *;
-            """,
-            (id_atendimento, id_procedimento),
+    item = session.get(
+        ProcedimentoRealizado,
+        (id_atendimento, id_procedimento),
+        options=[joinedload(ProcedimentoRealizado.procedimento)],
+    )
+    if item is None or item.faturado:
+        raise HTTPException(
+            status_code=404,
+            detail="Procedimento nao encontrado ou ja faturado.",
         )
-        row = cur.fetchone()
-        if row is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Procedimento nao encontrado ou ja faturado.",
-            )
-        conn.commit()
-        return {"deleted": row}
+
+    deleted = performed_procedure_dict(item)
+    session.delete(item)
+    session.commit()
+    return {"deleted": deleted}

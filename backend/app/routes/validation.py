@@ -1,51 +1,45 @@
 from fastapi import APIRouter, Depends
-from psycopg import Connection
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
-from app.db import get_connection
+from app.db import get_session
+from app.models import (
+    Atendimento,
+    Paciente,
+    Preceptor,
+    ProcedimentoRealizado,
+    Residente,
+    Unidade,
+)
 
 router = APIRouter(prefix="/validacao", tags=["Validacao"])
 
 
 @router.get("/dados-minimos")
-def validate_minimum_data(conn: Connection = Depends(get_connection)):
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            WITH validation_rules AS (
-                SELECT
-                    'Pacientes cadastrados' AS requisito,
-                    5 AS minimo_esperado,
-                    (SELECT COUNT(*) FROM paciente) AS total_encontrado
-                UNION ALL
-                SELECT 'Residentes cadastrados', 5, (SELECT COUNT(*) FROM residente)
-                UNION ALL
-                SELECT 'Preceptores cadastrados', 5, (SELECT COUNT(*) FROM preceptor)
-                UNION ALL
-                SELECT 'Unidades cadastradas', 3, (SELECT COUNT(*) FROM unidade)
-                UNION ALL
-                SELECT 'Atendimentos cadastrados', 10, (SELECT COUNT(*) FROM atendimento)
-                UNION ALL
-                SELECT
-                    'Procedimentos realizados cadastrados',
-                    10,
-                    (SELECT COUNT(*) FROM procedimento_realizado)
-            )
-            SELECT
-                requisito,
-                minimo_esperado,
-                total_encontrado,
-                CASE
-                    WHEN total_encontrado >= minimo_esperado THEN 'OK'
-                    ELSE 'FALHA'
-                END AS status
-            FROM validation_rules
-            ORDER BY requisito;
-            """
+def validate_minimum_data(session: Session = Depends(get_session)):
+    rules = (
+        ("Pacientes cadastrados", 5, Paciente),
+        ("Residentes cadastrados", 5, Residente),
+        ("Preceptores cadastrados", 5, Preceptor),
+        ("Unidades cadastradas", 3, Unidade),
+        ("Atendimentos cadastrados", 10, Atendimento),
+        ("Procedimentos realizados cadastrados", 10, ProcedimentoRealizado),
+    )
+    checks = []
+    for requirement, minimum, model in rules:
+        total = session.scalar(select(func.count()).select_from(model))
+        checks.append(
+            {
+                "requisito": requirement,
+                "minimo_esperado": minimum,
+                "total_encontrado": total,
+                "status": "OK" if total >= minimum else "FALHA",
+            }
         )
-        rows = cur.fetchall()
-        return {
-            "status_geral_etapa_1": "OK"
-            if all(row["status"] == "OK" for row in rows)
-            else "FALHA",
-            "checks": rows,
-        }
+
+    return {
+        "status_geral_etapa_1": (
+            "OK" if all(item["status"] == "OK" for item in checks) else "FALHA"
+        ),
+        "checks": sorted(checks, key=lambda item: item["requisito"]),
+    }

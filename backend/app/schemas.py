@@ -53,6 +53,7 @@ class AppointmentCreate(BaseModel):
     id_paciente: int
     id_residente: int
     id_preceptor: int
+    id_unidade: int
 
 
 class PerformedProcedureCreate(BaseModel):
@@ -61,6 +62,7 @@ class PerformedProcedureCreate(BaseModel):
     tempo_real_minutos: int = Field(gt=0)
     observacao: str | None = None
     faturado: bool = False
+    data_hora_inicio: datetime
 
 
 class UnitCreate(BaseModel):
@@ -83,3 +85,26 @@ class ScheduleCreate(BaseModel):
     turno: Shift
     id_residente: int
     id_preceptor: int
+    supervisao_ativa: bool = True
+
+
+class CompleteAppointmentCreate(AppointmentCreate):
+    procedimentos: list[PerformedProcedureCreate] = Field(min_length=1)
+
+
+class ScheduleAdjust(BaseModel):
+    id_residente: int
+    data_origem: date
+    turno_origem: Shift
+    data_destino: date
+    turno_destino: Shift
+
+
+class AdmissionCreate(BaseModel):
+    id_paciente: int
+    id_unidade: int
+    data_hora_entrada: datetime
+
+
+class AdmissionDischarge(BaseModel):
+    data_hora_saida: datetime

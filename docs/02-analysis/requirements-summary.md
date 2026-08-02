@@ -27,9 +27,11 @@
 
 ## Requisitos da Etapa 2
 
-- Stored procedures.
-- Triggers.
-- Views.
-- Implementacao com ORM.
-- Consultas avancadas com ORM.
-- Controle de concorrencia e transacoes.
+- Stored procedures: concluido.
+- Triggers: concluido.
+- Views: concluido.
+- Implementacao com ORM: concluido.
+- Consultas avancadas com ORM: concluido.
+- Controle de concorrencia e transacoes: concluido.
+
+Matriz detalhada: `phase-02-requirements-matrix.md`.

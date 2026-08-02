@@ -15,30 +15,74 @@ psql -U postgres
 ```
 
 ```sql
-CREATE DATABASE hospital_management_db;
+CREATE DATABASE hospital_management;
 \q
 ```
 
-## Executar os scripts
+## Fluxos de execucao
 
-Execute os comandos a partir da raiz do repositorio:
+Os scripts sao separados em tres fluxos para que a validacao dos dados minimos
+nao seja confundida com as operacoes de demonstracao, que alteram registros.
 
-```bash
-psql -U postgres -d hospital_management_db -f database/schema/01-create-tables.sql
-psql -U postgres -d hospital_management_db -f database/seeds/02-seed-data.sql
-psql -U postgres -d hospital_management_db -f database/queries/05-validation-counts.sql
-psql -U postgres -d hospital_management_db -f database/queries/03-crud-queries.sql
-psql -U postgres -d hospital_management_db -f database/queries/04-analytical-queries.sql
+### 1. Instalar a base
+
+```powershell
+.\scripts\run-phase-01.ps1 setup
 ```
 
-O diretorio `database/` e a fonte oficial dos scripts SQL da Etapa 1. O diretorio `sql/` foi mantido apenas como ponteiro para essa estrutura.
+Equivalente em Bash:
+
+```bash
+bash scripts/run-phase-01.sh setup
+```
+
+Esse fluxo executa:
+
+```text
+psql -U postgres -d hospital_management -f database/schema/01-create-tables.sql
+psql -U postgres -d hospital_management -f database/seeds/02-seed-data.sql
+```
+
+### 2. Validar os dados minimos
+
+```powershell
+.\scripts\run-phase-01.ps1 validate
+```
+
+Esse fluxo executa:
+
+```text
+psql -U postgres -d hospital_management -f database/queries/05-validation-counts.sql
+```
+
+### 3. Executar as demonstracoes
+
+```powershell
+.\scripts\run-phase-01.ps1 demo
+```
+
+Esse fluxo executa:
+
+```text
+psql -U postgres -d hospital_management -f database/queries/03-crud-queries.sql
+psql -U postgres -d hospital_management -f database/queries/04-analytical-queries.sql
+```
+
+Para executar os tres fluxos em sequencia:
+
+```powershell
+.\scripts\run-phase-01.ps1 all
+```
+
+O diretorio `database/` e a fonte oficial dos scripts SQL da Etapa 1. Os
+executores em `scripts/` apenas organizam a chamada desses arquivos.
 
 ## Ordem recomendada
 
 1. Criar as tabelas.
 2. Inserir os dados de teste.
-3. Validar os dados minimos.
-4. Executar as consultas CRUD.
+3. Validar os dados minimos antes de alterar os dados.
+4. Executar as demonstracoes de CRUD.
 5. Executar as consultas analiticas.
 
 ## Funcao de cada script

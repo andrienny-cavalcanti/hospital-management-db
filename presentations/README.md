@@ -1,5 +1,6 @@
 # Apresentacoes
 
-Diretorio reservado para materiais de apresentacao do projeto.
+Materiais de apresentacao do projeto:
 
-Sugestao: usar este espaco para slides, roteiro de apresentacao ou imagens exportadas para demonstracao.
+- `phase-02-video-script.md`: roteiro cronometrado para o video de ate oito
+  minutos.

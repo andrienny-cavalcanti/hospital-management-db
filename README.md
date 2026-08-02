@@ -12,7 +12,7 @@ O projeto foi organizado para apoiar duas etapas academicas:
 - **Contexto institucional:** Hospital Universitario Dra. Yuska Maritan Brito
 - **Nome do repositorio:** `hospital-management-db`
 - **Banco principal:** PostgreSQL
-- **Status atual:** Etapa 1 concluida, com Swagger opcional para demonstracao
+- **Status atual:** Etapas 1 e 2 concluidas e validadas
 
 ## Estrutura do repositorio
 
@@ -40,6 +40,7 @@ Hospital-Management-System-DB
 |   |-- 02-analysis
 |   |-- 03-modeling
 |   |-- 04-database
+|   |-- 05-advanced-sql
 |   `-- 06-orm
 |-- reports
 |   |-- phase-01
@@ -65,6 +66,28 @@ Hospital-Management-System-DB
 - Relatorio da Etapa 1.
 - Exportacao do DER.
 
+## Implementacao atual da Etapa 2
+
+- Migracao estrutural transacional e reaplicavel.
+- Relacao entre atendimento e unidade.
+- Registro do inicio dos procedimentos realizados.
+- Estruturas de internacao e auditoria de atendimento.
+- Media de tempo dos procedimentos preparada para atualizacao por trigger.
+- Protecao estrutural contra conflito de escala por residente, data e turno.
+- Triggers de sobreposicao de escala, auditoria e media implementados.
+- Stored procedures de atendimento completo, espera e reajuste implementadas.
+- Views de internacao, supervisao e estatisticas mensais implementadas.
+- ORM SQLAlchemy com mapeamentos, CRUD, consultas e lazy/eager loading.
+- Consultas ORM avancadas de supervisao, ultimo atendimento e risco.
+- Concorrencia de escalas com lock pessimista, constraint e logs.
+
+Guias e evidencias:
+
+- `docs/05-advanced-sql/execution-guide.md`
+- `docs/02-analysis/phase-02-requirements-matrix.md`
+- `reports/phase-02/phase-02-report.pdf`
+- `reports/phase-02/final-validation.md`
+
 ## Instalacao e execucao
 
 A Etapa 1 usa **SQL puro**. Nenhum backend, frontend ou ORM e necessario para executar a entrega principal.
@@ -86,7 +109,7 @@ psql -U postgres
 Crie o banco:
 
 ```sql
-CREATE DATABASE hospital_management_db;
+CREATE DATABASE hospital_management;
 \q
 ```
 
@@ -94,17 +117,25 @@ Se o banco ja existir e voce quiser recriar o schema, o script de criacao pode s
 
 ### 2. Executar os scripts da Etapa 1
 
-A partir da raiz do repositorio, execute os scripts nesta ordem:
+A partir da raiz do repositorio, o fluxo completo pode ser executado no
+PowerShell:
 
-```bash
-psql -U postgres -d hospital_management_db -f database/schema/01-create-tables.sql
-psql -U postgres -d hospital_management_db -f database/seeds/02-seed-data.sql
-psql -U postgres -d hospital_management_db -f database/queries/05-validation-counts.sql
-psql -U postgres -d hospital_management_db -f database/queries/03-crud-queries.sql
-psql -U postgres -d hospital_management_db -f database/queries/04-analytical-queries.sql
+```powershell
+.\scripts\run-phase-01.ps1 all
 ```
 
-O diretorio `database/` e a fonte oficial dos scripts SQL da Etapa 1. O diretorio `sql/` foi mantido apenas como ponteiro para evitar duplicacao de scripts.
+Ou em Bash:
+
+```bash
+bash scripts/run-phase-01.sh all
+```
+
+Os modos `setup`, `validate` e `demo` permitem executar separadamente a
+instalacao, a validacao e as demonstracoes. Consulte `scripts/README.md` para
+os parametros de banco e usuario.
+
+O diretorio `database/` e a fonte oficial dos scripts SQL da Etapa 1. Os
+executores apenas organizam a ordem de execucao.
 
 ### 3. Funcao de cada script
 
@@ -123,11 +154,27 @@ O diretorio `database/` e a fonte oficial dos scripts SQL da Etapa 1. O diretori
 - Evidencia de normalizacao: `docs/03-modeling/normalization-3nf.md`
 - Guia de execucao: `docs/04-database/execution-guide.md`
 
-## API Swagger opcional
+## Executar e validar a Etapa 2
 
-O projeto tambem inclui um backend opcional com FastAPI em `backend/`, criado para facilitar a manipulacao dos dados pelo Swagger UI.
+O executor completo aplica os recursos avancados e executa validacoes SQL,
+ORM e concorrencia:
 
-Essa API e apenas uma interface de apoio. A entrega oficial da Etapa 1 continua sendo formada pelos scripts SQL puros em `database/`.
+```powershell
+.\scripts\run-phase-02.ps1 all
+```
+
+Atencao: o modo `all` recria as tabelas. Para validar uma base ja preparada:
+
+```powershell
+.\scripts\run-phase-02.ps1 validate
+```
+
+Modos adicionais: `setup`, `sql`, `orm` e `concurrency`.
+
+## API Swagger com ORM
+
+O backend FastAPI em `backend/` implementa a camada ORM exigida na Etapa 2 com
+SQLAlchemy. As rotas de CRUD e consultas nao usam SQL textual.
 
 ```bash
 cd backend
@@ -144,6 +191,32 @@ Swagger UI:
 http://127.0.0.1:8000/docs
 ```
 
+## Interface web
+
+O diretório `frontend/` contém um painel Next.js responsivo para operar as
+funcionalidades do projeto: CRUD, atendimentos e procedimentos, equipe,
+unidades, escalas, internações, stored procedures, views, relatórios e
+auditoria.
+
+Com a API em execução, abra um segundo terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Acesse:
+
+```text
+http://localhost:3000
+```
+
+A interface usa `http://127.0.0.1:8000` como API padrão. Esse endereço também
+pode ser alterado e salvo no cabeçalho do painel.
+
 ## Objetivo academico
 
-Este repositorio demonstra projeto e implementacao de banco de dados por meio de modelagem conceitual, logica e fisica, normalizacao, operacoes SQL, consultas analiticas e preparacao para recursos avancados de banco de dados.
+Este repositorio demonstra modelagem conceitual, logica e fisica, normalizacao,
+SQL puro e avancado, triggers, stored procedures, views, ORM, transacoes e
+controle de concorrencia.
